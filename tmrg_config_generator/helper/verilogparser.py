@@ -38,7 +38,6 @@ class VerilogParser:
                 self.dict[self.module_name].append(i + 1)
 
     def get_module_name(self):
-        print(self.dict.keys())
         return list(self.dict.keys())
 
     def get_first_always_block(self, module_name):
