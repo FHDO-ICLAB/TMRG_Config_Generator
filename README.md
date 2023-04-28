@@ -1,6 +1,6 @@
 # TMRG_Config_Generator
 
-The TMRG_CONFIG_GENERATOR is a Python tool designed to assist in the triplication process of Verilog code with the [TMRG](https://gitlab.cern.ch/tmrg/tmrg) toolset by CERN. In its current version, it is able to place the necessary directives into the Verilog source code, as well as creating a configuration file, all based on a list of flipflops.
+The TMRG_Config_Generator is a Python tool designed to assist in the triplication process of Verilog code with the [TMRG](https://gitlab.cern.ch/tmrg/tmrg) toolset by CERN. In its current version, it is able to place the necessary directives into the Verilog source code, as well as creating a configuration file, all based on a list of flipflops.
 
 The list is structured as follows:
 ```
