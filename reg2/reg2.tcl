@@ -1,4 +1,8 @@
 #set_param tcl.collectionResultDisplayLimit 0
+
+# Either 3 or 1
+set countVotingcells 3
+
 proc get_triplicated_and_not_triplicated {leafcells triplicated not_triplicated} {
 
 	#Creates and opens files in working directory
@@ -22,7 +26,7 @@ proc get_triplicated_and_not_triplicated {leafcells triplicated not_triplicated}
         # Determine voting cell, if any
         set voter [get_cells $cells -quiet -filter {NAME =~ "*Voter*"}]
 
-        if {[llength $voter] > 0} {
+        if {([llength $voter] == 3 && $countVotingcells == 3) || ($voter ne "" && $countVotingcells == 1)} {
             if {[llength $cells] == 2} {
                 # If yes, add to "triplicated"
                 puts "$leafcell is indeed triplicated"
