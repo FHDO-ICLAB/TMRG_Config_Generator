@@ -4,7 +4,9 @@
 set countVotingcells 3
 
 proc get_triplicated_and_not_triplicated {leafcells triplicated not_triplicated} {
-
+	
+	global countVotingcells
+	
 	#Creates and opens files in working directory
 	#Truncate to zero if it exists. If it does not exist, create a new file. 
 	set triplicated_log [open $triplicated w]
@@ -43,8 +45,6 @@ proc get_triplicated_and_not_triplicated {leafcells triplicated not_triplicated}
             puts $not_triplicated_log "$name, $leafcell"
             flush $not_triplicated_log             
         }
-
-
         # if {[llength [get_cells -quiet -of_objects [get_nets $net] -filter {NAME =~ "*Voter*"}]] > 0} {
         #     # If yes, add to "triplicated"
 		# 	puts "$leafcell is indeed triplicated"
