@@ -12,13 +12,15 @@ proc get_triplicated_and_not_triplicated {leafcells triplicated not_triplicated}
         # Determine net connected to output pin
         set net [get_nets -of_objects [get_pins $pin]]
         # Determine parent reference name
-        set name [get_property ORIG_REF_NAME [get_property PARENT [get_cells $leafcell]]]
+        if {[catch {set name [get_property ORIG_REF_NAME [get_property PARENT [get_cells $leafcell]]]} errorstring]} {
+			set name [lindex [find_top] 0]
+		}
         # Determine all pins connected to the output net
         set pins [get_pins -quiet -of_objects [get_nets $net]]
         # Determine cells that belong to pins
         set cells [get_cells -quiet -of_objects [get_pins $pins]]
         # Determine voting cell, if any
-        set voter [get_cells -quiet -of_objects [get_nets $net] -filter {NAME =~ "*Voter*"}]
+        set voter [get_cells $cells -quiet -filter {NAME =~ "*Voter*"}]
 
         if {[llength $voter] > 0} {
             if {[llength $cells] == 2} {
