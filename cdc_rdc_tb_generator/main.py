@@ -17,9 +17,9 @@ def sort_signals(topmodule, signals):
     }
     for signal in signals:
         signal = signal.split("/")
-        addendum = re.search(r"[ABC]$", signal[-1])
+        addendum = re.search(r".*([A-C])", signal[-1])
         if addendum:
-            sorted_signals[addendum.group(0)].append(topmodule + "." + ".".join(signal))
+            sorted_signals[addendum.group(1)].append(topmodule + "." + ".".join(signal))
         else:
             print(f"Error in: {topmodule}.{".".join(signal)}")
     return sorted_signals
@@ -83,7 +83,7 @@ def write_file(filepath, content):
 
 
 def main():
-    test = load_file("../test.txt")
+    test = load_file("./reset_signals.txt")
     test2 = sort_signals("top.test", test)
     test3 = create_assertion(test2)
     test4 = create_tb_class(test3)
