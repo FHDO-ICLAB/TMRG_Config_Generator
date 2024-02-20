@@ -16,10 +16,10 @@ def sort_signals(topmodule, signals):
         "C": []
     }
     for signal in signals:
-        signal = signal.split("/")
-        addendum = re.search(r".*([A-C])", signal[-1])
+        signal = signal.replace("/", ".")
+        addendum = re.match(r".*([A-C])", signal)
         if addendum:
-            sorted_signals[addendum.group(1)].append(topmodule + "." + ".".join(signal))
+            sorted_signals[addendum.group(1)].append(f"{topmodule}.{addendum.group(0)}")
         else:
             print(f"Error in: {topmodule}.{".".join(signal)}")
     return sorted_signals
