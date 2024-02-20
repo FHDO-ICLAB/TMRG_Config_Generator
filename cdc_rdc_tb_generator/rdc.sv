@@ -17,14 +17,14 @@ class rdc;
     
     function reset(string appendix);
         case (appendix)
-            A : this.resetA;
-            B : this.resetB;
-            C : this.resetC;
+            "A" : this.resetA;
+            "B" : this.resetB;
+            "C" : this.resetC;
             default : $stop;
         endcase
     endfunction
     
-    function resetA(string suffix);
+    function resetA;
         assert(top.test.TimeControl.smpldbit_reg_i.resetA)
 		else
 			$fdisplay(this.rdc_fail, "top.test.TimeControl.smpldbit_reg_i.resetA");
