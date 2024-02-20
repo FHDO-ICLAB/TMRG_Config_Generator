@@ -84,7 +84,7 @@ def write_file(filepath, content):
 
 def main():
     test = load_file("./reset_signals.txt")
-    test2 = sort_signals("top.test", test)
+    test2 = sort_signals("top_test.can2TMR_u", test)
     test3 = create_assertion(test2)
     test4 = create_tb_class(test3)
     write_file("./rdc.sv", test4)
