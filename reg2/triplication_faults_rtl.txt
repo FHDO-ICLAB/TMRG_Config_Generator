@@ -1,0 +1,7 @@
+Reset Issue: TimeControl/freqTrim/control_fsm0/current_stateC_reg[2], 
+Reset Issue: TimeControl/freqTrim/control_fsm0/current_stateC_reg[1], 
+Reset Issue: TimeControl/freqTrim/control_fsm0/current_stateB_reg[2], 
+Reset Issue: TimeControl/freqTrim/control_fsm0/current_stateB_reg[1], 
+Reset Issue: MediumAccessControl/frshift/countC_reg[7], 
+Reset Issue: MediumAccessControl/frshift/countB_reg[7], 
+Reset Issue: MediumAccessControl/frshift/countA_reg[7], 

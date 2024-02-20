@@ -2,8 +2,9 @@
 
 # Either 3 or 1
 set countVotingcells 1
-set checkTripledResetDomain 0
-set checkTripledClockDomain 0
+set checkTripledResetDomain 1
+set checkTripledClockDomain 1
+set hierarchy_lvl ""
 
 proc get_triplicated_and_not_triplicated {leafcells triplicated not_triplicated triplication_faults} {
 	
@@ -38,16 +39,30 @@ proc get_triplicated_and_not_triplicated {leafcells triplicated not_triplicated 
         regexp {.*([A-C])} $parent_net_c -> parent_net_c_s
         
         # Determine rst pin
-        set pin_rst [get_pins -of_objects [get_cells $leafcell] -filter {DIRECTION == IN && IS_RESET == true}]
-        # Determine net connected to rst pin
-        set net_rst [get_nets -of_objects [get_pins $pin_rst]]
-        # Determine rst net suffix
-        regexp {.*([A-C])} $net_rst -> net_rst_s
-        # Determine parent of reset net
-        set parent_net_rst [get_property PARENT [get_nets $net_rst]]
-        # Determine parent reset net suffix
-        regexp {.*([A-C])} $parent_net_rst -> parent_net_rst_s
+        # Vivado Properties Reference ug912
+        # IS_RESET, Synchronous: The synchronous reset (R) input, when High, overrides all other inputs and resets the (Q) output Low on the Low-to-High clock (C) transition.
+        # IS_CLEAR, Asynchronous: CLR is High, it overrides all other inputs and resets the data output (Q) Low.
+        # IS_PRESET, Asynchronous: The asynchronous PRE, when High, overrides all other inputs and sets the (Q) output High.
+        set pin_rst [get_pins -of_objects [get_cells $leafcell] -filter {DIRECTION == IN && (IS_RESET == true || IS_CLEAR == true || IS_PRESET == true)}]
 
+        # FF may not have rst pin
+        if {$pin_rst ne ""} {
+            # Determine net connected to rst pin
+            set net_rst [get_nets -of_objects [get_pins $pin_rst]]
+            # FF may not have a net connected to rst pin
+            if {$net_rst ne ""} {
+                # Determine rst net suffix
+                regexp {.*([A-C])} $net_rst -> net_rst_s
+                # Determine parent of reset net
+                set parent_net_rst [get_property PARENT [get_nets $net_rst]]
+                # Determine parent reset net suffix
+                regexp {.*([A-C])} $parent_net_rst -> parent_net_rst_s
+            }
+        } else {
+            set net_rst_s $leafcell_s
+            set parent_net_rst_s $leafcell_s
+        }
+        
         # Determine parent reference name
         if {[catch {set name [get_property ORIG_REF_NAME [get_property PARENT [get_cells $leafcell]]]} errorstring]} {
 			set name [lindex [find_top] 0]
@@ -56,28 +71,39 @@ proc get_triplicated_and_not_triplicated {leafcells triplicated not_triplicated 
         # TODO introduce better checking of missing voter cell with catch
 
         # Determine cells that are connected to pins
-        set cells [get_cells -quiet -of_objects [get_nets $net_q]]
+        set cells [get_cells -of_objects [get_nets $net_q]]
         # Determine voting cell, if any
-        set voter [get_cells $cells -quiet -filter {NAME =~ "*Voter*"}]
+        set voter [get_cells $cells -filter {NAME =~ "*Voter*"}]
 
-        if {$parent_net_rst_s eq $net_rst_s && $checkTripledResetDomain} {
-            puts "reset net tripled"
-        } else {
-            puts $triplication_faults "$name, $leafcell, $net_rst"
-        }
+
+        
+        # if {($parent_net_rst_s eq $net_rst_s) && $checkTripledResetDomain} {
+        #     puts "reset net tripled"
+        # } else {
+        #     puts $triplication_faults "$name, $leafcell, $net_rst"
+        # }
         
         
-        if {$parent_net_c_s eq $net_c_s && $checkTripledClockDomain} {
-            puts "clock net tripled"
-        } else {
-            puts $triplication_faults "$name, $leafcell, $net_clk"
-        }
+        # if {($parent_net_c_s eq $net_c_s) && $checkTripledClockDomain} {
+        #     puts "clock net tripled"
+        # } else {
+        #     puts $triplication_faults "$name, $leafcell, $net_clk"
+        # }
+        
 
         if {([llength $voter] == 3 && $countVotingcells == 3) || ($voter ne "" && $countVotingcells == 1)} {
             if {[llength $cells] - [llength $voter] == 1} {
                 # If yes, add to "triplicated"
-                puts "$leafcell is indeed triplicated"
-                puts $triplicated_log "$name, $leafcell"
+                if {$checkTripledResetDomain && ($leafcell_s ne $net_rst_s && $leafcell_s ne $parent_net_rst_s)} {
+                    puts "Reset net of primitive is not triplicated: $leafcell"
+                    puts $triplication_faults "Reset Issue: $leafcell, $net_rst"
+                } elseif {$checkTripledClockDomain && ($leafcell_s ne $net_c_s && $leafcell_s ne $parent_net_c_s)} {
+                    puts "Clock net of primitive is not triplicated: $leafcell"
+                    puts $triplication_faults "Clock Issue: $leafcell, $net_c"                    
+                } else {
+                    puts "$leafcell is indeed triplicated"
+                    puts $triplicated_log "$leafcell_s: $name, $leafcell, $net_c"
+                }
             } else {
                 puts "$leafcell has too many output connections, check logs for further details"
                 puts $triplication_faults "$name, $leafcell, \[[join $cells ", "]\]"   
@@ -87,15 +113,6 @@ proc get_triplicated_and_not_triplicated {leafcells triplicated not_triplicated 
 			puts "$leafcell sadly is not triplicated"
             puts $not_triplicated_log "$name, $leafcell"         
         }
-        # if {[llength [get_cells -quiet -of_objects [get_nets $net] -filter {NAME =~ "*Voter*"}]] > 0} {
-        #     # If yes, add to "triplicated"
-		# 	puts "$leafcell is indeed triplicated"
-        #     puts $triplicated_log "$name, $leafcell"
-        # } else {
-        #     # If not, add to "not_triplicated"
-		# 	puts "$leafcell sadly is not triplicated"
-        #     puts $not_triplicated_log "$name, $leafcell"
-        # }
     }
 	close $triplicated_log
 	close $not_triplicated_log
@@ -104,6 +121,7 @@ proc get_triplicated_and_not_triplicated {leafcells triplicated not_triplicated 
 
 #Opens Elaborated Design
 synth_design -rtl
+current_instance $hierarchy_lvl
 #Get all leafcells that are primitive and belong to RTL_REGISTER group
 set leafcells [lsort -unique -decreasing -dictionary [get_cells -hierarchical -filter {IS_PRIMITIVE == true && PRIMITIVE_GROUP == RTL_REGISTER}]]
 get_triplicated_and_not_triplicated $leafcells "./triplicated_rtl.txt" "./not_triplicated_rtl.txt" "./triplication_faults_rtl.txt"
@@ -111,15 +129,17 @@ close_design
 
 #Opens Synthesized Design
 open_run synth_1 -name synth_1
+current_instance $hierarchy_lvl
 #Get all leafcells that are primitive and belong to FLOP_LATCH group
-set leafcells [lsort -unique -decreasing -dictionary [get_cells -hierarchical -filter {IS_PRIMITIVE == true && PRIMITIVE_GROUP == FLOP_LATCH}]]
+set leafcells [lsort -unique -decreasing -dictionary [get_cells -hierarchical -filter {IS_PRIMITIVE == true && PRIMITIVE_GROUP =~ FLOP*}]]
 get_triplicated_and_not_triplicated $leafcells "triplicated_synth.txt" "not_triplicated_synth.txt" "./triplication_faults_synth.txt"
 close_design
 
 #Opens Synthesized Design
 open_run impl_1
+current_instance $hierarchy_lvl
 #Get all leafcells that are primitive and belong to FLOP_LATCH group
-set leafcells [lsort -unique -decreasing -dictionary [get_cells -hierarchical -filter {IS_PRIMITIVE == true && PRIMITIVE_GROUP == FLOP_LATCH}]]
+set leafcells [lsort -unique -decreasing -dictionary [get_cells -hierarchical -filter {IS_PRIMITIVE == true && PRIMITIVE_GROUP =~ FLOP*}]]
 get_triplicated_and_not_triplicated $leafcells "triplicated_impl.txt" "not_triplicated_impl.txt" "./triplication_faults_impl.txt"
 close_design
-
+log_file -close

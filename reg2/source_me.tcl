@@ -1,0 +1,1 @@
+source reg2.tcl > console.log
