@@ -77,13 +77,17 @@ endclass
 """
     return template
 
+def write_file(filepath, content):
+    with open(filepath, "w") as f:
+        f.write(content)
+
 
 def main():
     test = load_file("../test.txt")
     test2 = sort_signals("top.test", test)
     test3 = create_assertion(test2)
     test4 = create_tb_class(test3)
-    print("hi")
+    write_file("./rdc.sv", test4)
 
 
 main()
